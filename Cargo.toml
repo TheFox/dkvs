@@ -10,7 +10,7 @@ repository = "https://github.com/TheFox/dkvs"
 keywords = ["key-value", "storage", "database", "distributed"]
 categories = ["command-line-utilities", "database"]
 edition = "2018"
-default-run = "dkvs"
+default-run = "dkvs_server"
 
 [build-dependencies]
 chrono = "0.4"
@@ -21,5 +21,5 @@ chrono = "0.4"
 panic = 'abort'
 
 [[bin]]
-name = "dkvs"
-path = "src/main.rs"
+name = "dkvs_server"
+path = "src/app/server.rs"

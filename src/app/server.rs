@@ -4,8 +4,9 @@ include!(concat!(env!("OUT_DIR"), "/config.rs"));
 use std::env::args;
 use std::io::Result;
 
-mod app;
-use crate::app::App;
+use dkvs::app::App;
+use dkvs::net::server::Server;
+use dkvs::fs::config::Config;
 
 #[allow(dead_code)]
 fn print_app_info() {
@@ -16,11 +17,13 @@ fn print_app_info() {
 }
 
 fn print_usage() {
-    println!("Usage:\n  dkvs [<OPTIONS...>]");
+    println!("Usage:");
+    println!("  dkvs_server [<OPTIONS...>]");
     println!();
     println!("Options:");
     println!("  -h|--help                       Show help.");
     println!("  -V|--version                    Show version.");
+    println!("  -c|--config <path>              Path to server.json file.");
     println!();
 }
 
@@ -67,6 +70,12 @@ fn main() -> Result<()> {
                 print_usage();
                 return Ok(());
             },
+            "-c" => {
+                if let Some(_next) = next {
+                    app.config_file_path = Some(_next.to_string());
+                    skip_next = true;
+                }
+            },
             _ => {
                 panic!("Unrecognized argument: {}", arg);
             },
@@ -76,6 +85,9 @@ fn main() -> Result<()> {
     if cfg!(debug_assertions) {
         println!("-> app.config_file_path: {:?}", app.config_file_path);
     }
+
+    let server = Server::new();
+    server.run();
 
     println!("-> end");
 

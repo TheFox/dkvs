@@ -9,4 +9,4 @@ which cargo &> /dev/null || { echo 'ERROR: cargo not found in PATH'; exit 1; }
 cd "${SCRIPT_BASEDIR}/.."
 
 set -x
-cargo run -v --bin dkvs -- $*
+cargo run -v --bin dkvs_server -- $*
