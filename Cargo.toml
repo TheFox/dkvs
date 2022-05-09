@@ -1,0 +1,25 @@
+[package]
+name = "dkvs"
+description = "Distributed Key-Value Storage written in Rust."
+version = "0.1.0-dev.1"
+license = "MIT"
+authors = ["Christian Mayer <christian@fox21.at>"]
+homepage = "https://github.com/TheFox/dkvs"
+documentation = "https://github.com/TheFox/dkvs"
+repository = "https://github.com/TheFox/dkvs"
+keywords = ["key-value", "storage", "database", "distributed"]
+categories = ["command-line-utilities", "database"]
+edition = "2018"
+default-run = "dkvs"
+
+[build-dependencies]
+chrono = "0.4"
+
+[dependencies]
+
+[profile.release]
+panic = 'abort'
+
+[[bin]]
+name = "dkvs"
+path = "src/main.rs"
