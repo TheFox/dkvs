@@ -11,9 +11,8 @@ use dkvs::fs::config::Config;
 #[allow(dead_code)]
 fn print_app_info() {
     println!("{} v{} ({})", APP_NAME, APP_VERSION, APP_BUILD_AT);
-    println!("{}", APP_AUTHORS);
-    println!("{}", APP_HOMEPAGE);
-    println!();
+    println!("Authors: {}", APP_AUTHORS);
+    println!("Homepage: {}", APP_HOMEPAGE);
 }
 
 fn print_usage() {
@@ -62,12 +61,12 @@ fn main() -> Result<()> {
         match arg.as_str() {
             "-h" | "--help" => {
                 print_app_info();
+                println!();
                 print_usage();
                 return Ok(());
             },
             "-V" | "--version" => {
                 print_app_info();
-                print_usage();
                 return Ok(());
             },
             "-c" => {
@@ -86,7 +85,10 @@ fn main() -> Result<()> {
         println!("-> app.config_file_path: {:?}", app.config_file_path);
     }
 
-    let server = Server::new();
+    let config = Config::from(app.config_file_path);
+    dbg!(&config);
+
+    let mut server = Server::from(config);
     server.run();
 
     println!("-> end");

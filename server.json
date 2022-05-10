@@ -1,3 +1,12 @@
 {
-    "x": "y"
+    "verbose": 1,
+    "listen": "127.0.0.1:9000",
+    "cluster": {
+        "enabled": false,
+        "listen": "127.0.0.1:9100",
+        "id": "cluster-1",
+        "nodes": [
+            "127.0.0.1:9101"
+        ]
+    }
 }
