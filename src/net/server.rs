@@ -9,6 +9,7 @@ use std::process::id;
 use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
+use std::collections::HashMap;
 
 use crate::fs::config::Config;
 use crate::net::client::Client;
@@ -17,7 +18,8 @@ pub struct Server {
     config: Config,
     shutdown: bool,
 
-    tcp_clients: Vec<Client>,
+    tcp_clients: HashMap<u64, Client>,
+    tcp_clients_id: u64,
 }
 
 impl From<Config> for Server {
@@ -26,7 +28,8 @@ impl From<Config> for Server {
             config: config,
             shutdown: false,
 
-            tcp_clients: vec![],
+            tcp_clients: HashMap::new(),
+            tcp_clients_id: 0,
         }
     }
 }
@@ -37,7 +40,8 @@ impl Server {
             config: Config::new(),
             shutdown: false,
 
-            tcp_clients: vec![],
+            tcp_clients: HashMap::new(),
+            tcp_clients_id: 0,
         }
     }
 
@@ -69,14 +73,8 @@ impl Server {
                             Err(error) => panic!("Peer Addr: {}", error),
                         }
 
-                        self.tcp_clients.push(Client::from(client));
-
-
-
-                        // println!("-> sleep");
-                        // sleep(Duration::from_millis(2000));
-
-                        // self.shutdown = true;
+                        // self.tcp_clients.push(Client::from(client));
+                        self.tcp_clients.insert(self.tcp_clients_id, Client::from(client));
                     },
                     Err(ref error) if error.kind() == ErrorKind::WouldBlock => {
                         // println!("-> WouldBlock: {}", error);
@@ -88,37 +86,63 @@ impl Server {
                 }
             }
 
-            println!("-> clients: {}", self.tcp_clients.len());
-            for client in &mut self.tcp_clients {
-                println!("-> client: {:?}", client);
-
-                let mut buffer = [0; 1024];
+            let mut remove_tcp_clients: Vec<u64> = vec![];
+            for (client_id, client) in &mut self.tcp_clients {
+                let mut buffer = [0; 2048];
                 match client.tcp_stream.read(&mut buffer) {
                     Ok(_r) => {
-                        println!("-> read OK: {:?}", _r);
-                        let buffer_s = String::from_utf8_lossy(&buffer[..]);
-                        println!("-> client says: '{}'", buffer_s);
+                        println!("-> read OK");
+
+                        let mut prev = [0; 2];
+                        let mut len = 0;
+                        let mut args: Vec<String> = vec![];
+                        while len < 2048 {
+                            println!("-> buffer[{}]: {:?} 0={} 1={}", len, &buffer[len], &prev[0], &prev[1]);
+
+                            match buffer[len] {
+                                0 => {
+                                    if prev[0] == 13 && prev[1] == 10 {
+                                        len -= 2;
+                                        break;
+                                    }
+                                },
+                                _ => {},
+                            }
+
+                            prev[0] = prev[1];
+                            prev[1] = buffer[len];
+
+                            len += 1;
+                        }
+
+                        println!("-> prev: {:?}", prev);
+
+                        let buffer_s: String = String::from_utf8_lossy(&buffer[0..len]).to_string();
+                        // let buffer_s: String = String::from_utf8(&buffer[0..len]).unwrap();
+                        println!("-> client input: l={} '{}'", &buffer_s.len(), &buffer_s);
+
+                        match buffer_s.as_ref() {
+                            "P" | "PING" => client.pong(),
+                            "E" | "EXIT" => {
+                                remove_tcp_clients.push(*client_id);
+                                client.shutdown();
+                            },
+                            "S" | "SHUTDOWN" => self.shutdown = true,
+                            _ => {},
+                        }
                     },
                     // Err(error) => println!("-> read error: {}", error),
                     Err(error) => {},
                 }
             }
 
-            // println!("-> millis: {}", start_time.elapsed().as_millis());
-            // println!("-> micros: {}", start_time.elapsed().as_micros());
-            // println!("-> nanos: {}", start_time.elapsed().as_nanos());
-            // println!("-> has 50ms? -> {}", start_time.elapsed() > fifty_millis);
+            // println!("-> remove_tcp_clients: {}", remove_tcp_clients.len());
+            for client_id in remove_tcp_clients {
+                println!("-> remove client: {}", client_id);
+                self.tcp_clients.remove(&client_id);
+            }
 
-            // let do_steps = || -> Result<(), Error> {
-            //     let sleep_dur = start_time.elapsed() - fifty_millis;
-            //     Ok(())
-            // };
-            // let res = do_steps();
-            // dbg!(&res);
-
-            // let sleep_dur = fifty_millis - start_time.elapsed();
-            // println!("-> diff: {:?}", sleep_dur);
-
+            // Task Management
             let sleep_dur = if start_time.elapsed() < fifty_millis {
                 fifty_millis - start_time.elapsed()
             }
@@ -126,8 +150,6 @@ impl Server {
                 println!("-> time elapsed: {:?}", fifty_millis);
                 Duration::from_millis(1)
             };
-
-            // println!("-> sleep: {:?}", sleep_dur);
             sleep(sleep_dur);
         }
 
