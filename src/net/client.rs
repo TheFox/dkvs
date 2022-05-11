@@ -23,6 +23,11 @@ impl Client {
         self.tcp_stream.write_all(&buffer);
     }
 
+    pub fn pong_id(&mut self, id: &String) {
+        let buffer: String = format!("PONG {}\r\n", id);
+        self.tcp_stream.write_all(&buffer.as_bytes());
+    }
+
     pub fn shutdown(&self) {
         self.tcp_stream.shutdown(Shutdown::Both).expect("TcpStream.shutdown() call failed");
     }

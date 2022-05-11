@@ -123,6 +123,10 @@ impl Server {
 
                         match buffer_s.as_ref() {
                             "P" | "PING" => client.pong(),
+                            "P" | "PING1" => {
+                                let b = "2".to_string();
+                                client.pong_id(&b);
+                            },
                             "E" | "EXIT" => {
                                 remove_tcp_clients.push(*client_id);
                                 client.shutdown();
