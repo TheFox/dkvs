@@ -5,6 +5,7 @@
         "enabled": false,
         "listen": "127.0.0.1:9100",
         "id": "cluster-1",
+        "read_only": false,
         "nodes": [
             "127.0.0.1:9101"
         ]
