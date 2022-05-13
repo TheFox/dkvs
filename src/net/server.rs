@@ -13,6 +13,7 @@ use std::collections::HashMap;
 
 use crate::fs::config::Config;
 use crate::net::client::Client;
+use crate::utils::task::Manager;
 
 pub struct Server {
     config: Config,
@@ -49,6 +50,8 @@ impl Server {
         println!("-> Server::run");
         println!("-> PID: {}", id());
 
+        let mut manager = Manager::new();
+
         let ten_millis = Duration::from_millis(10);
         let fifty_millis = Duration::from_millis(50);
         let hundred_millis = Duration::from_millis(100);
@@ -56,7 +59,11 @@ impl Server {
         let clients_listener = TcpListener::bind(self.config.listen.clone())?;
         clients_listener.set_nonblocking(true).expect("Cannot set TcpListener non-blocking");
 
+        let mut test1 = 0;
+        manager.add_task("Test1".into(), Duration::new(5, 0));
+
         while !self.shutdown {
+            println!("-> run test1: {}", test1);
             let start_time = Instant::now();
 
             'incoming_loop: for stream in clients_listener.incoming() {
@@ -155,6 +162,8 @@ impl Server {
                 Duration::from_millis(1)
             };
             sleep(sleep_dur);
+
+            test1 += 1;
         }
 
         println!("-> Server::run done");

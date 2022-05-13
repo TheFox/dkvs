@@ -16,6 +16,7 @@ default-run = "dkvs_server"
 chrono = "0.4"
 
 [dependencies]
+chrono = "0.4"
 serde_json = "1.0"
 
 [dependencies.serde]
