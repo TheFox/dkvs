@@ -60,10 +60,10 @@ impl Server {
         clients_listener.set_nonblocking(true).expect("Cannot set TcpListener non-blocking");
 
         let mut test1 = 0;
-        manager.add_task("Test1".into(), Duration::new(5, 0));
+        manager.add_task("Test1".into(), Duration::new(5, 0), Box::new(|| test1 += 1));
 
         while !self.shutdown {
-            println!("-> run test1: {}", test1);
+            println!("-> run test1: {:>5}", test1);
             let start_time = Instant::now();
 
             'incoming_loop: for stream in clients_listener.incoming() {
