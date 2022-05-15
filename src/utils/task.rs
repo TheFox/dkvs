@@ -3,16 +3,12 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
 
-// use chrono::Local;
-// use chrono::DateTime;
-
 pub struct Task<F>
 where F: FnMut() -> () {
     name: String,
     dur: Duration,
     func: F,
 
-    // last_run_at: Option<DateTime<Local>>,
     last_run_at: Instant,
 }
 
@@ -20,7 +16,6 @@ impl<F> Task<F>
 where F: FnMut() -> () {
     fn new(name: String, dur: Duration, func: F) -> Self {
         println!("-> Task::new({})", &name);
-        // let now = ;
         Self {
             name: name,
             dur: dur,
@@ -47,11 +42,11 @@ where F: FnMut() -> () {
 
 impl<F> Manager<F>
 where F: FnMut() -> () {
-    pub fn new() -> Self {
-        println!("-> Manager::new()");
+    pub fn new(wait_dur: Duration) -> Self {
+        println!("-> Manager::new({:?})", wait_dur);
         Self {
             tasks: vec![],
-            wait_dur: Duration::from_millis(50),
+            wait_dur: wait_dur,
             start_time: Instant::now(),
         }
     }

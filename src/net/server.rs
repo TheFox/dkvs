@@ -20,6 +20,9 @@ use crate::net::client::Client;
 use crate::utils::task::Task;
 use crate::utils::task::Manager;
 
+const CLIENT_INPUT_BUFFER_LEN: usize = 16;
+const MAIN_WAIT: u64 = 1000;
+
 pub struct Server {
     config: Config,
     shutdown: bool,
@@ -55,7 +58,7 @@ impl Server {
         println!("-> Server::run");
         println!("-> PID: {}", id());
 
-        let mut manager = Manager::new();
+        let mut manager = Manager::new(Duration::from_millis(MAIN_WAIT));
         manager.add_task("main".into(), Duration::new(10, 0), || {
             // println!("-> manager main()");
         });
@@ -111,23 +114,25 @@ impl Server {
 
             // clients_listener = clients_listener.try_clone().expect("clone failed...");
 
+            // Check Clients for input.
             let mut remove_tcp_clients: Vec<u64> = vec![];
             for (client_id, client) in &mut self.tcp_clients {
-                let mut buffer = [0; 2048];
+                let mut buffer = [0; CLIENT_INPUT_BUFFER_LEN];
                 match client.tcp_stream.read(&mut buffer) {
                     Ok(_r) => {
                         println!("-> read OK");
 
                         let mut prev = [0; 2];
-                        let mut len = 0;
+                        let mut buffer_pos = 0;
                         let mut args: Vec<String> = vec![];
-                        while len < 2048 {
-                            println!("-> buffer[{}]: {:?} 0={} 1={}", len, &buffer[len], &prev[0], &prev[1]);
+                        while buffer_pos < CLIENT_INPUT_BUFFER_LEN {
+                            println!("-> buffer[{}]: {:?} 0={} 1={}", buffer_pos, &buffer[buffer_pos], &prev[0], &prev[1]);
 
-                            match buffer[len] {
+                            match buffer[buffer_pos] {
                                 0 => {
                                     if prev[0] == 13 && prev[1] == 10 {
-                                        len -= 2;
+                                        // New Line
+                                        buffer_pos -= 2;
                                         break;
                                     }
                                 },
@@ -135,15 +140,15 @@ impl Server {
                             }
 
                             prev[0] = prev[1];
-                            prev[1] = buffer[len];
+                            prev[1] = buffer[buffer_pos];
 
-                            len += 1;
+                            buffer_pos += 1;
                         }
 
                         println!("-> prev: {:?}", prev);
 
-                        let buffer_s: String = String::from_utf8_lossy(&buffer[0..len]).to_string();
-                        // let buffer_s: String = String::from_utf8(&buffer[0..len]).unwrap();
+                        let buffer_s: String = String::from_utf8_lossy(&buffer[0..buffer_pos]).to_string();
+                        // let buffer_s: String = String::from_utf8(&buffer[0..buffer_pos]).unwrap();
                         println!("-> client input: l={} '{}'", &buffer_s.len(), &buffer_s);
 
                         match buffer_s.as_ref() {
@@ -160,8 +165,8 @@ impl Server {
                             _ => {},
                         }
                     },
-                    // Err(error) => println!("-> read error: {}", error),
-                    Err(error) => {},
+                    Err(error) => println!("-> read error: {}", error),
+                    // Err(error) => {},
                 }
             }
 
