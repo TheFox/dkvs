@@ -5,37 +5,43 @@ use std::time::Instant;
 use chrono::Local;
 use chrono::DateTime;
 
-type TaskFn = fn() -> ();
-
-struct Task {
+struct Task<F>
+where F: FnMut() -> () {
     name: String,
     dur: Duration,
-    func: Box<Fn()>,
-    last_run_at: Option<DateTime<Local>>,
+    func: F,
+
+    // last_run_at: Option<DateTime<Local>>,
 }
 
-impl Task {
-    fn new(name: String, dur: Duration, func: Box<Fn()>) -> Self {
+impl<F> Task<F>
+where F: FnMut() -> () {
+    fn new(name: String, dur: Duration, func: F) -> Self {
         println!("-> Task::new({})", &name);
+        // let now = Instant::now();
         Self {
             name: name,
             dur: dur,
             func: func,
-            last_run_at: None,
+
+            // last_run_at: None,
         }
     }
 
     fn run(&mut self) {
         println!("-> Task::run() -> {}", self.name);
+
         (self.func)();
     }
 }
 
-pub struct Manager {
-    tasks: Vec<Task>,
+pub struct Manager<F>
+where F: FnMut() -> () {
+    tasks: Vec<Task<F>>,
 }
 
-impl Manager {
+impl<F> Manager<F>
+where F: FnMut() -> () {
     pub fn new() -> Self {
         println!("-> Manager::new()");
         Self {
@@ -43,7 +49,7 @@ impl Manager {
         }
     }
 
-    pub fn add_task(&mut self, name: String, dur: Duration, func: Box<Fn()>) {
+    pub fn add_task(&mut self, name: String, dur: Duration, func: F) {
         println!("-> Manager::add_task({})", &name);
 
         let task = Task::new(name, dur, func);

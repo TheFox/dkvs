@@ -10,6 +10,8 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
 use std::collections::HashMap;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 use crate::fs::config::Config;
 use crate::net::client::Client;
@@ -60,10 +62,21 @@ impl Server {
         clients_listener.set_nonblocking(true).expect("Cannot set TcpListener non-blocking");
 
         let mut test1 = 0;
-        manager.add_task("Test1".into(), Duration::new(5, 0), Box::new(|| test1 += 1));
+        let mut test2: Box<u64> = Box::new(0);
+        manager.add_task("Test1".into(), Duration::new(5, 0), || {
+            let t2: &mut u64 = test2.deref_mut();
+            *t2 += 100;
+        });
 
         while !self.shutdown {
+            test1 += 1;
+            let t2: &mut u64 = test2.deref_mut();
+            *t2 += 1;
+
             println!("-> run test1: {:>5}", test1);
+            println!("-> run test2: {:?}", test2);
+
+
             let start_time = Instant::now();
 
             'incoming_loop: for stream in clients_listener.incoming() {
@@ -153,6 +166,8 @@ impl Server {
                 self.tcp_clients.remove(&client_id);
             }
 
+            manager.run();
+
             // Task Management
             let sleep_dur = if start_time.elapsed() < fifty_millis {
                 fifty_millis - start_time.elapsed()
@@ -162,8 +177,6 @@ impl Server {
                 Duration::from_millis(1)
             };
             sleep(sleep_dur);
-
-            test1 += 1;
         }
 
         println!("-> Server::run done");
