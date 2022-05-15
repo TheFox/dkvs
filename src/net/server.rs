@@ -17,6 +17,7 @@ use std::cell::RefCell;
 
 use crate::fs::config::Config;
 use crate::net::client::Client;
+use crate::utils::task::Task;
 use crate::utils::task::Manager;
 
 pub struct Server {
@@ -54,43 +55,28 @@ impl Server {
         println!("-> Server::run");
         println!("-> PID: {}", id());
 
+        // let mut manager: Manager<Task<FnMut() -> ()>> = Manager::new();
+        // let mut manager: Manager<Task<_>> = Manager::new();
+        // let mut manager: Manager<_> = Manager::new();
         let mut manager = Manager::new();
-
-        let ten_millis = Duration::from_millis(10);
-        let fifty_millis = Duration::from_millis(50);
-        let hundred_millis = Duration::from_millis(100);
+        manager.add_task("main".into(), Duration::new(10, 0), || {
+            println!("-> manager main()");
+        });
 
         let clients_listener = TcpListener::bind(self.config.listen.clone())?;
         clients_listener.set_nonblocking(true).expect("Cannot set TcpListener non-blocking");
 
-        let mut test1 = 0;
-        let mut test2: Box<u64> = Box::new(0);
-        let mut test3: RefCell<u64> = RefCell::new(0);
-
-        manager.add_task("Test1".into(), Duration::new(5, 0), || {
-            let t1 = &mut test1;
-            *t1 += 100;
-
-            let t2: &mut u64 = test2.deref_mut();
-            *t2 += 100;
-
-            *test3.borrow_mut() += 10000;
-        });
+        // Tasks POC
+        // let mut test3: RefCell<u64> = RefCell::new(0);
+        // manager.add_task("Test1".into(), Duration::new(5, 0), || {
+        //     *test3.borrow_mut() += 10000;
+        // });
 
         while !self.shutdown {
             manager.start();
 
-            // test1 += 1;
-            // let t2: &mut u64 = test2.deref_mut();
-            // *t2 += 1;
-            *test3.borrow_mut() += 1;
-
-            // println!("-> run test1: {}", test1);
-            // println!("-> run test2: {:?}", test2);
-            println!("-> run test3: {:?}", test3);
-
-
-            // let start_time = Instant::now();
+            // *test3.borrow_mut() += 1;
+            // println!("-> run test3: {:?}", test3);
 
             'incoming_loop: for stream in clients_listener.incoming() {
                 // dbg!(&stream);
@@ -111,7 +97,7 @@ impl Server {
                     },
                     Err(ref error) if error.kind() == ErrorKind::WouldBlock => {
                         // println!("-> WouldBlock: {}", error);
-                        // sleep(hundred_millis);
+                        // sleep(Duration::from_millis(100));
                         // continue;
                         break 'incoming_loop;
                     },

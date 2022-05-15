@@ -6,7 +6,7 @@ use std::time::Instant;
 use chrono::Local;
 use chrono::DateTime;
 
-struct Task<F>
+pub struct Task<F>
 where F: FnMut() -> () {
     name: String,
     dur: Duration,

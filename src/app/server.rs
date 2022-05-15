@@ -31,11 +31,6 @@ fn print_usage() {
 fn main() -> Result<()> {
     #[cfg(debug_assertions)]
     println!("-> start");
-    println!("-> u8::MAX:   {:>40}", u8::MAX);
-    println!("-> u16::MAX:  {:>40}", u16::MAX);
-    println!("-> u32::MAX:  {:>40}", u32::MAX);
-    println!("-> u64::MAX:  {:>40}", u64::MAX);
-    println!("-> u128::MAX: {:>40}", u128::MAX);
 
     let args: Vec<String> = args().collect();
     let argc = args.len();
