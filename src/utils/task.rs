@@ -1,4 +1,5 @@
 
+use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -40,6 +41,8 @@ where F: FnMut() -> () {
 pub struct Manager<F>
 where F: FnMut() -> () {
     tasks: Vec<Task<F>>,
+    wait_dur: Duration,
+    start_time: Instant,
 }
 
 impl<F> Manager<F>
@@ -48,6 +51,8 @@ where F: FnMut() -> () {
         println!("-> Manager::new()");
         Self {
             tasks: vec![],
+            wait_dur: Duration::from_millis(50),
+            start_time: Instant::now(),
         }
     }
 
@@ -58,9 +63,14 @@ where F: FnMut() -> () {
         self.tasks.push(task);
     }
 
+    pub fn start(&mut self) {
+        self.start_time = Instant::now();
+    }
+
     pub fn run(&mut self) {
         // println!("-> Manager::run()");
 
+        // Check tasks.
         for task in &mut self.tasks {
             // println!("-> task: {}", task.name);
 
@@ -69,5 +79,15 @@ where F: FnMut() -> () {
                 task.run();
             }
         }
+
+        // Sleep
+        let sleep_dur = if self.start_time.elapsed() < self.wait_dur {
+            self.wait_dur - self.start_time.elapsed()
+        }
+        else {
+            println!("-> time elapsed: {:?}", self.wait_dur);
+            Duration::from_millis(1)
+        };
+        sleep(sleep_dur);
     }
 }

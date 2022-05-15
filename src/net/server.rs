@@ -74,10 +74,12 @@ impl Server {
             let t2: &mut u64 = test2.deref_mut();
             *t2 += 100;
 
-            *test3.borrow_mut() = 10000;
+            *test3.borrow_mut() += 10000;
         });
 
         while !self.shutdown {
+            manager.start();
+
             // test1 += 1;
             // let t2: &mut u64 = test2.deref_mut();
             // *t2 += 1;
@@ -88,7 +90,7 @@ impl Server {
             println!("-> run test3: {:?}", test3);
 
 
-            let start_time = Instant::now();
+            // let start_time = Instant::now();
 
             'incoming_loop: for stream in clients_listener.incoming() {
                 // dbg!(&stream);
@@ -177,17 +179,8 @@ impl Server {
                 self.tcp_clients.remove(&client_id);
             }
 
-            manager.run();
-
             // Task Management
-            let sleep_dur = if start_time.elapsed() < fifty_millis {
-                fifty_millis - start_time.elapsed()
-            }
-            else {
-                println!("-> time elapsed: {:?}", fifty_millis);
-                Duration::from_millis(1)
-            };
-            sleep(sleep_dur);
+            manager.run();
         }
 
         println!("-> Server::run done");
