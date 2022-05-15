@@ -29,6 +29,10 @@ impl Client {
     }
 
     pub fn shutdown(&self) {
-        self.tcp_stream.shutdown(Shutdown::Both).expect("TcpStream.shutdown() call failed");
+        self.tcp_stream.shutdown(Shutdown::Both);
+        // self.tcp_stream.shutdown(Shutdown::Both).expect("TcpStream.shutdown() call failed");
+        // match self.tcp_stream.shutdown(Shutdown::Both) {
+        //     _ => {},
+        // }
     }
 }

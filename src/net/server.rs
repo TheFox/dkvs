@@ -130,7 +130,11 @@ impl Server {
 
                             match buffer[buffer_pos] {
                                 0 => {
-                                    if prev[0] == 13 && prev[1] == 10 {
+                                    if buffer_pos == 2 && prev[0] == 0 && prev[1] == 0 {
+                                        remove_tcp_clients.push(*client_id);
+                                        break;
+                                    }
+                                    else if prev[0] == 13 && prev[1] == 10 {
                                         // New Line
                                         buffer_pos -= 2;
                                         break;
@@ -159,19 +163,20 @@ impl Server {
                             },
                             "E" | "EXIT" | "Q" | "QUIT" => {
                                 remove_tcp_clients.push(*client_id);
-                                client.shutdown();
                             },
                             "S" | "SHUTDOWN" => self.shutdown = true,
                             _ => {},
                         }
                     },
-                    Err(error) => println!("-> read error: {}", error),
+                    Err(ref error) if error.kind() == ErrorKind::WouldBlock => {},
+                    Err(error) => println!("-> read error: {:?}", error),
                     // Err(error) => {},
                 }
             }
 
             for client_id in remove_tcp_clients {
                 println!("-> remove client: {}", client_id);
+                self.tcp_clients[&client_id].shutdown();
                 self.tcp_clients.remove(&client_id);
             }
 
