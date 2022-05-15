@@ -12,6 +12,8 @@ use std::time::Instant;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::cell::Cell;
+use std::cell::RefCell;
 
 use crate::fs::config::Config;
 use crate::net::client::Client;
@@ -63,18 +65,27 @@ impl Server {
 
         let mut test1 = 0;
         let mut test2: Box<u64> = Box::new(0);
+        let mut test3: RefCell<u64> = RefCell::new(0);
+
         manager.add_task("Test1".into(), Duration::new(5, 0), || {
+            let t1 = &mut test1;
+            *t1 += 100;
+
             let t2: &mut u64 = test2.deref_mut();
             *t2 += 100;
+
+            *test3.borrow_mut() = 10000;
         });
 
         while !self.shutdown {
-            test1 += 1;
-            let t2: &mut u64 = test2.deref_mut();
-            *t2 += 1;
+            // test1 += 1;
+            // let t2: &mut u64 = test2.deref_mut();
+            // *t2 += 1;
+            *test3.borrow_mut() += 1;
 
-            println!("-> run test1: {:>5}", test1);
-            println!("-> run test2: {:?}", test2);
+            // println!("-> run test1: {}", test1);
+            // println!("-> run test2: {:?}", test2);
+            println!("-> run test3: {:?}", test3);
 
 
             let start_time = Instant::now();

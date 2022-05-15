@@ -12,19 +12,20 @@ where F: FnMut() -> () {
     func: F,
 
     // last_run_at: Option<DateTime<Local>>,
+    last_run_at: Instant,
 }
 
 impl<F> Task<F>
 where F: FnMut() -> () {
     fn new(name: String, dur: Duration, func: F) -> Self {
         println!("-> Task::new({})", &name);
-        // let now = Instant::now();
+        // let now = ;
         Self {
             name: name,
             dur: dur,
             func: func,
 
-            // last_run_at: None,
+            last_run_at: Instant::now(),
         }
     }
 
@@ -32,6 +33,7 @@ where F: FnMut() -> () {
         println!("-> Task::run() -> {}", self.name);
 
         (self.func)();
+        self.last_run_at = Instant::now();
     }
 }
 
@@ -57,10 +59,15 @@ where F: FnMut() -> () {
     }
 
     pub fn run(&mut self) {
-        println!("-> Manager::run()");
+        // println!("-> Manager::run()");
 
-        for task in &self.tasks {
-            println!("-> task: {}", task.name);
+        for task in &mut self.tasks {
+            // println!("-> task: {}", task.name);
+
+            if task.last_run_at.elapsed() >= task.dur {
+                println!("-> run task: {}", task.name);
+                task.run();
+            }
         }
     }
 }
