@@ -14,7 +14,7 @@ fn get_default_enabled() -> bool { false }
 #[derive(Debug, Deserialize, Clone)]
 pub struct Cluster {
     #[serde(default = "get_default_enabled")]
-    enabled: bool,
+    pub enabled: bool,
 
     id: String,
     nodes: Option<Vec<String>>,
@@ -39,7 +39,7 @@ pub struct Config {
     pub listen: String,
 
     #[serde(default = "get_default_cluster")]
-    cluster: Cluster,
+    pub cluster: Cluster,
 }
 
 impl Config {

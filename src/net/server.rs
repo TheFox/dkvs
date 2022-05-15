@@ -55,34 +55,36 @@ impl Server {
         println!("-> Server::run");
         println!("-> PID: {}", id());
 
-        // let mut manager: Manager<Task<FnMut() -> ()>> = Manager::new();
-        // let mut manager: Manager<Task<_>> = Manager::new();
-        // let mut manager: Manager<_> = Manager::new();
         let mut manager = Manager::new();
         manager.add_task("main".into(), Duration::new(10, 0), || {
-            println!("-> manager main()");
+            // println!("-> manager main()");
         });
 
-        let clients_listener = TcpListener::bind(self.config.listen.clone())?;
-        clients_listener.set_nonblocking(true).expect("Cannot set TcpListener non-blocking");
+        // Clients
+        let mut clients_listener = TcpListener::bind(self.config.listen.clone())?;
+        clients_listener
+            .set_nonblocking(true)
+            .expect("Cannot set Clients TcpListener to non-blocking");
 
-        // Tasks POC
-        // let mut test3: RefCell<u64> = RefCell::new(0);
-        // manager.add_task("Test1".into(), Duration::new(5, 0), || {
-        //     *test3.borrow_mut() += 10000;
-        // });
+        // Cluster
+        // let cluster_listener: Option<TcpListener> = if self.config.cluster.enabled {
+        //     let _cluster_listener = TcpListener::bind(self.config.listen.clone())?;
+        //     _cluster_listener
+        //         .set_nonblocking(true)
+        //         .expect("Cannot set Clients TcpListener to non-blocking");
+        //     Some(_cluster_listener)
+        // }
+        // else { None };
 
         while !self.shutdown {
             manager.start();
 
-            // *test3.borrow_mut() += 1;
-            // println!("-> run test3: {:?}", test3);
-
-            'incoming_loop: for stream in clients_listener.incoming() {
-                // dbg!(&stream);
+            // Tasks POC
+            'clients_incoming_loop: for stream in clients_listener.incoming() {
                 match stream {
                     Ok(mut client) => {
                         println!("-> stream OK");
+                        dbg!(&clients_listener);
                         dbg!(&client);
 
                         match client.peer_addr() {
@@ -92,18 +94,22 @@ impl Server {
                             Err(error) => panic!("Peer Addr: {}", error),
                         }
 
-                        // self.tcp_clients.push(Client::from(client));
+                        // let client2 = client.try_clone().expect("clone failed...");
+
                         self.tcp_clients.insert(self.tcp_clients_id, Client::from(client));
+                        self.tcp_clients_id += 1;
                     },
                     Err(ref error) if error.kind() == ErrorKind::WouldBlock => {
                         // println!("-> WouldBlock: {}", error);
                         // sleep(Duration::from_millis(100));
                         // continue;
-                        break 'incoming_loop;
+                        break 'clients_incoming_loop;
                     },
                     Err(error) => panic!("TcpListener encountered IO error: {}", error),
                 }
             }
+
+            // clients_listener = clients_listener.try_clone().expect("clone failed...");
 
             let mut remove_tcp_clients: Vec<u64> = vec![];
             for (client_id, client) in &mut self.tcp_clients {
@@ -146,7 +152,7 @@ impl Server {
                                 let b = "2".to_string();
                                 client.pong_id(&b);
                             },
-                            "E" | "EXIT" => {
+                            "E" | "EXIT" | "Q" | "QUIT" => {
                                 remove_tcp_clients.push(*client_id);
                                 client.shutdown();
                             },
@@ -159,11 +165,12 @@ impl Server {
                 }
             }
 
-            // println!("-> remove_tcp_clients: {}", remove_tcp_clients.len());
             for client_id in remove_tcp_clients {
                 println!("-> remove client: {}", client_id);
                 self.tcp_clients.remove(&client_id);
             }
+
+            println!("-> tcp_clients: {}", self.tcp_clients.len());
 
             // Task Management
             manager.run();

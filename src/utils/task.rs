@@ -3,8 +3,8 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
 
-use chrono::Local;
-use chrono::DateTime;
+// use chrono::Local;
+// use chrono::DateTime;
 
 pub struct Task<F>
 where F: FnMut() -> () {
@@ -31,7 +31,7 @@ where F: FnMut() -> () {
     }
 
     fn run(&mut self) {
-        println!("-> Task::run() -> {}", self.name);
+        // println!("-> Task::run() -> {}", self.name);
 
         (self.func)();
         self.last_run_at = Instant::now();
@@ -75,7 +75,7 @@ where F: FnMut() -> () {
             // println!("-> task: {}", task.name);
 
             if task.last_run_at.elapsed() >= task.dur {
-                println!("-> run task: {}", task.name);
+                // println!("-> run task: {} ({:?})", task.name, task.last_run_at);
                 task.run();
             }
         }
